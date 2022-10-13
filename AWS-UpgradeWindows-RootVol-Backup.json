@@ -691,7 +691,8 @@
                 "Parameters": {
                     "commands": [
                         "Invoke-WebRequest -uri https://s3.amazonaws.com/ec2-downloads-windows/EC2Launch/latest/EC2-Windows-Launch.zip -OutFile $env:USERPROFILE\\Desktop\\EC2-Windows-Launch.zip",
-                        "Invoke-WebRequest -uri https://s3.amazonaws.com/ec2-downloads-windows/EC2Launch/latest/install.ps1 -OutFile $env:USERPROFILE\\Desktop\\install.ps1 & $env:USERPROFILE\\Desktop\\install.ps1",
+                        "Invoke-WebRequest -uri https://s3.amazonaws.com/ec2-downloads-windows/EC2Launch/latest/install.ps1 -OutFile $env:USERPROFILE\\Desktop\\install.ps1",
+                        "$env:USERPROFILE\\Desktop\\install.ps1",
                         "Remove-Item $env:USERPROFILE\\Desktop\\install.ps1",
                         "Remove-Item $env:USERPROFILE\\Desktop\\EC2-Windows-Launch.zip"
                     ]
