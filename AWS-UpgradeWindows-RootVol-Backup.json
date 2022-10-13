@@ -50,7 +50,7 @@
             },
             "outputs": [{
                     "Name": "Region",
-                    "Selector": "$.Reservations[0].Instances[0].Placement.AvailabilityZone",
+                    "Selector": "$.Reservations[0].Instances[0].Placement.AvailabilityZone"
                 },
                 {
                     "Name": "RootDeviceName",
@@ -96,7 +96,7 @@
                 "Service": "ec2",
                 "Api": "CreateSnapshot",
                 "VolumeId": "{{ getRootVolumeInfo.RootVolumeId }}",
-                "Description": "Root Volume Snapshot for {{ InstanceId }} created by Automation Document",
+                "Description": "{{ ChangeControlTicket }} Windows Upgrade for {{ InstanceId }} created by Automation Document",
                 "TagSpecifications": [{
                     "ResourceType": "snapshot",
                     "Tags": [{
@@ -335,7 +335,7 @@
         {
             "name": "installAWSPVDriverOnInstance",
             "action": "aws:runCommand",
-            "onFailure": "Abort",
+            "onFailure": "Continue",
             "inputs": {
                 "DocumentName": "AWS-RunPowerShellScript",
                 "InstanceIds": [
@@ -657,12 +657,74 @@
                 }
             },
             "isCritical": "true",
+            "nextStep": "updatePowerConfig"
+        },
+        {
+            "name": "updatePowerConfig",
+            "action": "aws:runCommand",
+            "onFailure": "Continue",
+            "inputs": {
+                "DocumentName": "AWS-RunPowerShellScript",
+                "InstanceIds": [
+                    "{{ InstanceId }}"
+                ],
+                "Parameters": {
+                    "commands": [
+                        "powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 0",
+                        "powercfg /setacvalueindex 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 0",
+                        "powercfg /setacvalueindex a1841308-3541-4fab-bc81-f71556f20b4a 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 0"
+                    ]
+                }
+            },
+            "isCritical": "true",
+            "nextStep": "installUpdatedEC2Launch"
+        },
+        {
+            "name": "installUpdatedEC2Launch",
+            "action": "aws:runCommand",
+            "onFailure": "Continue",
+            "inputs": {
+                "DocumentName": "AWS-RunPowerShellScript",
+                "InstanceIds": [
+                    "{{ InstanceId }}"
+                ],
+                "Parameters": {
+                    "commands": [
+                        "Invoke-WebRequest -uri https://s3.amazonaws.com/ec2-downloads-windows/EC2Launch/latest/EC2-Windows-Launch.zip -OutFile $env:USERPROFILE\\Desktop\\EC2-Windows-Launch.zip",
+                        "Invoke-WebRequest -uri https://s3.amazonaws.com/ec2-downloads-windows/EC2Launch/latest/install.ps1 -OutFile $env:USERPROFILE\\Desktop\\install.ps1 & $env:USERPROFILE\\Desktop\\install.ps1",
+                        "Remove-Item $env:USERPROFILE\\Desktop\\install.ps1",
+                        "Remove-Item $env:USERPROFILE\\Desktop\\EC2-Windows-Launch.zip"
+                    ]
+                }
+            },
+            "isCritical": "true",
+            "nextStep": "installUpdatedSSMAgent"
+        },
+        {
+            "name": "installUpdatedSSMAgent",
+            "action": "aws:runCommand",
+            "onFailure": "Continue",
+            "inputs": {
+                "DocumentName": "AWS-RunPowerShellScript",
+                "InstanceIds": [
+                    "{{ InstanceId }}"
+                ],
+                "Parameters": {
+                    "commands": [
+                        "Invoke-WebRequest -uri https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe -OutFile $env:USERPROFILE\\Desktop\\SSMAgent_latest.exe",
+                        "Start-Process -FilePath $env:USERPROFILE\\Desktop\\SSMAgent_Latest.exe -ArgumentList \"/S\" -wait",
+                        "Remove-Item -Force $env:USERPROFILE\\Desktop\\SSMAgent_Latest.exe",
+                        "Restart-Service AmazonSSMAgent"
+                    ]
+                }
+            },
+            "isCritical": "true",
             "isEnd": "true"
         }
     ],
     "outputs": [
         "installAwsEnaNetworkDriverOnInstance.Output",
         "installAWSNVMeOnInstance.Output",
-        "installAWSPVDriverOnInstance.Output",
+        "installAWSPVDriverOnInstance.Output"
     ]
 }
