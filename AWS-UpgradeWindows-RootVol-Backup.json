@@ -1,6 +1,6 @@
 {
     "schemaVersion": "0.3",
-    "description": "Create Root Volume Backup and Upgraded the drivers pre windows update",
+    "description": "Create Root Volume Backup, Upgrade Drivers and power configuration",
     "assumeRole": "{{ AutomationAssumeRole }}",
     "parameters": {
         "InstanceId": {
